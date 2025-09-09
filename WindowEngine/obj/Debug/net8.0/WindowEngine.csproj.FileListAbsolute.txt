@@ -28,3 +28,4 @@
 /Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A1/WindowEngine/obj/Debug/net8.0/WindowEngine.pdb
 /Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A1/WindowEngine/obj/Debug/net8.0/WindowEngine.genruntimeconfig.cache
 /Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A1/WindowEngine/obj/Debug/net8.0/ref/WindowEngine.dll
+/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A1/WindowEngine/obj/Debug/net8.0/WindowEngine.sourcelink.json
