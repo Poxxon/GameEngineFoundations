@@ -1,7 +1,7 @@
 # Assignment 1 OpenGL Setup & First Render
 
 ## Library Used
-I used OpenTK for the project. I ended up running this on my Mac since I couldn’t get it working properly through Visual Studio Community on Windows. I used the terminal to install .NET and needed SDKs alongside all the needed dependencies + OpenTK by using the following commands:
+I used OpenTK for the project. I ended up running this on my Mac on VS code since I couldn’t get it working properly through Visual Studio Community on Windows. I used the terminal to install .NET and needed SDKs alongside all the needed dependencies + OpenTK by using the following commands:
 
 ### To create the project and add OpenTK:
 ```bash
