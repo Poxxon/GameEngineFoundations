@@ -1,168 +1,233 @@
 using System;
-using OpenTK;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Desktop;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using OpenTK.Graphics.OpenGL4;
 
 namespace WindowEngine
 {
+    // Minimal shader helper kept in this file (no extra files needed)
+    internal sealed class Shader : IDisposable
+    {
+        public int Handle { get; private set; }
+
+        public Shader(string vertexSrc, string fragmentSrc)
+        {
+            int vs = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vs, vertexSrc);
+            GL.CompileShader(vs);
+            CheckCompile(vs, "Vertex");
+
+            int fs = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fs, fragmentSrc);
+            GL.CompileShader(fs);
+            CheckCompile(fs, "Fragment");
+
+            Handle = GL.CreateProgram();
+            GL.AttachShader(Handle, vs);
+            GL.AttachShader(Handle, fs);
+            GL.LinkProgram(Handle);
+
+            GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int ok);
+            if (ok == 0)
+            {
+                Console.WriteLine($"[Program Link Error] {GL.GetProgramInfoLog(Handle)}");
+            }
+
+            // The shaders are linked into the program; delete shader objects
+            GL.DetachShader(Handle, vs);
+            GL.DetachShader(Handle, fs);
+            GL.DeleteShader(vs);
+            GL.DeleteShader(fs);
+        }
+
+        public void Use() => GL.UseProgram(Handle);
+
+        public void SetMatrix4(string name, Matrix4 m)
+        {
+            int loc = GL.GetUniformLocation(Handle, name);
+            if (loc != -1) GL.UniformMatrix4(loc, false, ref m);
+        }
+
+        public void Dispose()
+        {
+            if (Handle != 0)
+            {
+                GL.DeleteProgram(Handle);
+                Handle = 0;
+            }
+        }
+
+        private static void CheckCompile(int shader, string type)
+        {
+            GL.GetShader(shader, ShaderParameter.CompileStatus, out int ok);
+            if (ok == 0)
+            {
+                Console.WriteLine($"[{type} Shader Error] {GL.GetShaderInfoLog(shader)}");
+            }
+        }
+    }
+
     public class Game : GameWindow
     {
-        private int vertexBufferHandle;
-        private int shaderProgramHandle;
-        private int vertexArrayHandle;
+        // GPU resources
+        private int _vao, _vbo, _ebo;
+        private Shader _shader;
 
-        // Constructor
-        public Game()
-            : base(GameWindowSettings.Default, NativeWindowSettings.Default)
+        // State
+        private float _time = 0f;
+        private bool _wireframe = false;
+
+        // Quad data: 4 vertices, 6 indices (two triangles)
+        // Positions only (x, y, z) to keep it simple
+        private readonly float[] _vertices =
         {
-            // Set window size to 1280x768
-            this.Size = new Vector2i(1280, 768);
+            -0.5f, -0.5f, 0.0f, // 0 bottom-left
+             0.5f, -0.5f, 0.0f, // 1 bottom-right
+             0.5f,  0.5f, 0.0f, // 2 top-right
+            -0.5f,  0.5f, 0.0f  // 3 top-left
+        };
 
-            // Center the window on the screen
-            this.CenterWindow(this.Size);
+        private readonly uint[] _indices =
+        {
+            0, 1, 2,
+            2, 3, 0
+        };
+
+        public Game()
+            : base(GameWindowSettings.Default, new NativeWindowSettings
+            {
+                Size = new Vector2i(1280, 768),
+                Title = "WindowEngine — A2 Quad (OpenTK)"
+            })
+        {
+            CenterWindow(new Vector2i(1280, 768));
         }
 
-        // Called automatically whenever the window is resized
+        // Resize: keep viewport in sync
         protected override void OnResize(ResizeEventArgs e)
         {
-            // Update the OpenGL viewport to match the new window dimensions
-            GL.Viewport(0, 0, e.Width, e.Height);
             base.OnResize(e);
+            GL.Viewport(0, 0, e.Width, e.Height);
         }
 
-        // Called once when the game starts, ideal for loading resources
+        // Load once: buffers, vertex format, shaders
         protected override void OnLoad()
         {
             base.OnLoad();
 
-            // Set the background color (RGBA)
-            GL.ClearColor(new Color4(0.5f, 0.7f, 0.8f, 1f));
+            GL.ClearColor(0.2f, 0.3f, 0.35f, 1f);
 
-            // Define a simple triangle in normalized device coordinates (NDC)
-            float[] vertices = new float[]
-            {
-                0.0f,  0.5f, 0.0f,   // Top vertex
-               -0.5f, -0.5f, 0.0f,   // Bottom-left vertex
-                0.5f, -0.5f, 0.0f    // Bottom-right vertex
-            };
+            // Generate buffers
+            _vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
-            // Generate a Vertex Buffer Object (VBO) to store vertex data on GPU
-            vertexBufferHandle = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0); // Unbind to prevent accidental modifications
+            _ebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
-            // Generate a Vertex Array Object (VAO) to store the VBO configuration
-            vertexArrayHandle = GL.GenVertexArray();
-            GL.BindVertexArray(vertexArrayHandle);
+            // Describe vertex format via VAO
+            _vao = GL.GenVertexArray();
+            GL.BindVertexArray(_vao);
 
-            // Bind the VBO and define the layout of vertex data for shaders
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
+            // Bind buffers while configuring VAO
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ebo);
+
+            // layout(location=0) => vec3 position
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+            // Unbind VAO; state is recorded in VAO
             GL.BindVertexArray(0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            // Do NOT unbind EBO here if you keep VAO unbound, it's okay because EBO binding is stored in VAO when VAO was bound.
+            // (We already bound EBO while VAO was bound.)
 
-            // Vertex shader: positions each vertex
-            string vertexShaderCode = @"
-                #version 330 core
-                layout(location = 0) in vec3 aPosition; // Vertex position input
+            // Minimal shaders with uMVP uniform and solid color
+            const string vs = @"#version 330 core
+                layout(location=0) in vec3 aPos;
+                uniform mat4 uMVP;
+                void main() {
+                    gl_Position = uMVP * vec4(aPos, 1.0);
+                }";
 
-                void main()
-                {
-                    gl_Position = vec4(aPosition, 1.0); // Convert vec3 to vec4 for output
-                }
-            ";
-
-            // Fragment shader: outputs a single color
-            string fragmentShaderCode = @"
-                #version 330 core
+            const string fs = @"#version 330 core
                 out vec4 FragColor;
+                void main() {
+                    FragColor = vec4(0.85, 0.35, 0.6, 1.0);
+                }";
 
-                void main()
-                {
-                    FragColor = vec4(0.6f, 0.2f, 0.8f, 1.0f); // Orange-red color
-                }
-            ";
+            _shader = new Shader(vs, fs);
 
-            // Compile shaders
-            int vertexShaderHandle = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vertexShaderHandle, vertexShaderCode);
-            GL.CompileShader(vertexShaderHandle);
-            CheckShaderCompile(vertexShaderHandle, "Vertex Shader");
-
-            int fragmentShaderHandle = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fragmentShaderHandle, fragmentShaderCode);
-            GL.CompileShader(fragmentShaderHandle);
-            CheckShaderCompile(fragmentShaderHandle, "Fragment Shader");
-
-            // Create shader program and link shaders
-            shaderProgramHandle = GL.CreateProgram();
-            GL.AttachShader(shaderProgramHandle, vertexShaderHandle);
-            GL.AttachShader(shaderProgramHandle, fragmentShaderHandle);
-            GL.LinkProgram(shaderProgramHandle);
-
-            // Cleanup shaders after linking (no longer needed individually)
-            GL.DetachShader(shaderProgramHandle, vertexShaderHandle);
-            GL.DetachShader(shaderProgramHandle, fragmentShaderHandle);
-            GL.DeleteShader(vertexShaderHandle);
-            GL.DeleteShader(fragmentShaderHandle);
+            // Start filled
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
         }
 
-        // Called every frame to update game logic
+        // Update: input & time
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
-            // Handle input, animations, physics, AI, etc.
+
+            _time += (float)args.Time;
+
+            // ESC to quit
+            if (KeyboardState.IsKeyDown(Keys.Escape))
+                Close();
+
+            // F1 toggles wireframe (on key press, not hold)
+            if (KeyboardState.IsKeyPressed(Keys.F1))
+            {
+                _wireframe = !_wireframe;
+                GL.PolygonMode(MaterialFace.FrontAndBack, _wireframe ? PolygonMode.Line : PolygonMode.Fill);
+            }
         }
 
-        // Called every frame to render graphics
+        // Render
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             base.OnRenderFrame(args);
 
-            // Clear the screen with background color
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
-            // Use our shader program
-            GL.UseProgram(shaderProgramHandle);
+            _shader.Use();
 
-            // Bind the VAO and draw the triangle
-            GL.BindVertexArray(vertexArrayHandle);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            // Build MVP (simple rotation around Y)
+            var model = Matrix4.CreateRotationY(_time);
+            var view = Matrix4.LookAt(new Vector3(0, 0, 2), Vector3.Zero, Vector3.UnitY);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(
+                MathHelper.DegreesToRadians(45f),
+                Size.X / (float)Size.Y,
+                0.1f, 100f);
+
+            var mvp = model * view * proj;
+            _shader.SetMatrix4("uMVP", mvp);
+
+            GL.BindVertexArray(_vao);
+            GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
 
-            // Display the rendered frame
             SwapBuffers();
         }
 
-        // Called when the game is closing or resources need to be released
+        // Cleanup
         protected override void OnUnload()
         {
-            // Unbind and delete buffers and shader program
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.DeleteBuffer(vertexBufferHandle);
+            base.OnUnload();
 
             GL.BindVertexArray(0);
-            GL.DeleteVertexArray(vertexArrayHandle);
+            GL.DeleteVertexArray(_vao);
 
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.DeleteBuffer(_vbo);
+
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.DeleteBuffer(_ebo);
+
+            _shader?.Dispose();
             GL.UseProgram(0);
-            GL.DeleteProgram(shaderProgramHandle);
-
-            base.OnUnload();
-        }
-
-        // Helper function to check for shader compilation errors
-        private void CheckShaderCompile(int shaderHandle, string shaderName)
-        {
-            GL.GetShader(shaderHandle, ShaderParameter.CompileStatus, out int success);
-            if (success == 0)
-            {
-                string infoLog = GL.GetShaderInfoLog(shaderHandle);
-                Console.WriteLine($"Error compiling {shaderName}: {infoLog}");
-            }
         }
     }
 }

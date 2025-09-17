@@ -1,22 +1,19 @@
-# Assignment 1 OpenGL Setup & First Render
+# WindowEngine — Assignment 2
 
-## Library Used
-I used OpenTK for the project. I ended up running this on my Mac on VS code since I couldn’t get it working properly through Visual Studio Community on Windows. I used the terminal to install .NET and needed SDKs alongside all the needed dependencies + OpenTK by using the following commands:
+### Library Used
+This project uses **OpenTK** (Open Toolkit) for window creation, OpenGL rendering, and input.
 
-### To create the project and add OpenTK:
-```bash
-dotnet new console -f net8.0 -n WindowEngine
+### How to Run
+- Make sure you have **.NET 8 SDK** installed
+- Clone this repo and open the project folder
+- Run:
+  ```bash
+  dotnet run
+  ```
 
-dotnet add package OpenTK
-dotnet add package OpenTK.Windowing.Desktop
-dotnet add package OpenTK.Graphics.OpenGL4
-```
+### Controls
+- **ESC** → quit the app  
+- **F1** → toggle wireframe / filled mode  
 
-## How to run project
-To run the program, you can :
-* Clone the repo
-* Make sure to have .NET 8 or above SDK installed
-* In the project terminal run:
-```bash
-dotnet run
-```
+### Notes
+I implemented this on macOS using Visual Studio Code with the .NET 8 SDK, since I couldn’t get Visual Studio Community on Windows working.
