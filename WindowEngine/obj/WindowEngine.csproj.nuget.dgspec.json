@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A2/WindowEngine/WindowEngine.csproj": {}
+    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj": {}
   },
   "projects": {
-    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A2/WindowEngine/WindowEngine.csproj": {
+    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A2/WindowEngine/WindowEngine.csproj",
+        "projectUniqueName": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj",
         "projectName": "WindowEngine",
-        "projectPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A2/WindowEngine/WindowEngine.csproj",
+        "projectPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj",
         "packagesPath": "/Users/pouyarad/.nuget/packages/",
-        "outputPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A2/WindowEngine/obj/",
+        "outputPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/pouyarad/.nuget/NuGet/NuGet.Config"
