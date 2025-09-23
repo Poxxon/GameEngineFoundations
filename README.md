@@ -1,19 +1,20 @@
-# WindowEngine — Assignment 2
+# WindowEngine — Assignment 3 (3D Cube)
 
 ### Library Used
-This project uses **OpenTK** (Open Toolkit) for window creation, OpenGL rendering, and input.
+**OpenTK** (Open Toolkit) for windowing, OpenGL context, and input.
+
+### How I Rendered the Cube
+- Defined **8 unique vertices** for a unit cube centered at the origin.
+- Used an **EBO** (index buffer) with **36 indices** (12 triangles) to draw the 6 faces.
+- Enabled **depth testing** so hidden faces are not visible.
+- Built **MVP** matrices:
+  - `model`: rotates over time (Y and X) for a clear 3D effect
+  - `view`: `LookAt` camera
+  - `projection`: perspective with a 60° FOV
+- Vertex shader multiplies `uMVP * vec4(aPos, 1.0)`, fragment shader outputs a solid color.
 
 ### How to Run
-- Make sure you have **.NET 8 SDK** installed
-- Clone this repo and open the project folder
-- Run:
+- Requires **.NET 8 SDK**
+- From the project folder:
   ```bash
   dotnet run
-  ```
-
-### Controls
-- **ESC** → quit the app  
-- **F1** → toggle wireframe / filled mode  
-
-### Notes
-I implemented this on macOS using Visual Studio Code with the .NET 8 SDK, since I couldn’t get Visual Studio Community on Windows working.
