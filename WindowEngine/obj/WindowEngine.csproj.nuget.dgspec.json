@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj": {}
+    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A4/WindowEngine/WindowEngine.csproj": {}
   },
   "projects": {
-    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj": {
+    "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A4/WindowEngine/WindowEngine.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj",
+        "projectUniqueName": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A4/WindowEngine/WindowEngine.csproj",
         "projectName": "WindowEngine",
-        "projectPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj",
+        "projectPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A4/WindowEngine/WindowEngine.csproj",
         "packagesPath": "/Users/pouyarad/.nuget/packages/",
-        "outputPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/obj/",
+        "outputPath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A4/WindowEngine/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/pouyarad/.nuget/NuGet/NuGet.Config"
@@ -51,6 +51,14 @@
             "OpenTK.Windowing.Desktop": {
               "target": "Package",
               "version": "[4.9.4, )"
+            },
+            "StbImageSharp": {
+              "target": "Package",
+              "version": "[2.30.15, )"
+            },
+            "System.Drawing.Common": {
+              "target": "Package",
+              "version": "[9.0.9, )"
             }
           },
           "imports": [

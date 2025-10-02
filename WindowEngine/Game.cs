@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Graphics.OpenGL4;
+using StbImageSharp;
 
 namespace WindowEngine
 {
@@ -69,27 +71,27 @@ namespace WindowEngine
         // GPU resources
         private int _vao, _vbo, _ebo;
         private Shader _shader;
+        private int _texture;
 
         // State
         private float _time = 0f;
         private bool _wireframe = false;
 
         // -------- Cube geometry --------
-        // 8 unique corners of a unit cube centered at origin
-        // Positions: (x, y, z)
+        // Position (x,y,z) + TexCoord (u,v)
         private static readonly float[] s_CubeVertices =
         {
             // Front face (z = +0.5)
-            -0.5f, -0.5f,  0.5f, // 0
-             0.5f, -0.5f,  0.5f, // 1
-             0.5f,  0.5f,  0.5f, // 2
-            -0.5f,  0.5f,  0.5f, // 3
+            -0.5f, -0.5f, 0.5f,  0f, 0f, // 0
+             0.5f, -0.5f, 0.5f,  1f, 0f, // 1
+             0.5f,  0.5f, 0.5f,  1f, 1f, // 2
+            -0.5f,  0.5f, 0.5f,  0f, 1f, // 3
 
             // Back face (z = -0.5)
-            -0.5f, -0.5f, -0.5f, // 4
-             0.5f, -0.5f, -0.5f, // 5
-             0.5f,  0.5f, -0.5f, // 6
-            -0.5f,  0.5f, -0.5f  // 7
+            -0.5f, -0.5f, -0.5f,  1f, 0f, // 4
+             0.5f, -0.5f, -0.5f,  0f, 0f, // 5
+             0.5f,  0.5f, -0.5f,  0f, 1f, // 6
+            -0.5f,  0.5f, -0.5f,  1f, 1f  // 7
         };
 
         // 12 triangles (2 per face) -> 36 indices
@@ -124,7 +126,7 @@ namespace WindowEngine
             : base(GameWindowSettings.Default, new NativeWindowSettings
             {
                 Size = new Vector2i(1280, 768),
-                Title = "WindowEngine — A3 Cube (OpenTK)"
+                Title = "WindowEngine — A4 Texture (OpenTK)"
             })
         {
             CenterWindow(new Vector2i(1280, 768));
@@ -164,8 +166,12 @@ namespace WindowEngine
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ebo);
 
             // layout(location=0) => vec3 position
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
+
+            // layout(location=1) => vec2 texcoord
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+            GL.EnableVertexAttribArray(1);
 
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -173,18 +179,51 @@ namespace WindowEngine
             // Shaders
             const string vs = @"#version 330 core
                 layout(location=0) in vec3 aPos;
+                layout(location=1) in vec2 aTex;
                 uniform mat4 uMVP;
+                out vec2 TexCoord;
                 void main() {
                     gl_Position = uMVP * vec4(aPos, 1.0);
+                    TexCoord = aTex;
                 }";
 
             const string fs = @"#version 330 core
                 out vec4 FragColor;
+                in vec2 TexCoord;
+                uniform sampler2D uTexture;
                 void main() {
-                    FragColor = vec4(0.4, 0.75, 0.95, 1.0);
+                    FragColor = texture(uTexture, TexCoord);
                 }";
 
             _shader = new Shader(vs, fs);
+
+            _texture = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, _texture);
+
+            StbImage.stbi_set_flip_vertically_on_load(1);
+            using (var stream = File.OpenRead("crate.png"))
+            {
+                var img = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+                GL.TexImage2D(TextureTarget.Texture2D,
+                    0,
+                    PixelInternalFormat.Rgba,
+                    img.Width,
+                    img.Height,
+                    0,
+                    PixelFormat.Rgba,
+                    PixelType.UnsignedByte,
+                    img.Data);
+            }
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+            int texLoc = GL.GetUniformLocation(_shader.Handle, "uTexture");
+            GL.Uniform1(texLoc, 0); // bind sampler to texture unit 0
 
             // Start filled
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
@@ -217,7 +256,7 @@ namespace WindowEngine
 
             // --- MVP setup ---
             // Rotate around both Y and X a bit so depth is obvious
-            var model = Matrix4.CreateScale(1.5f) * Matrix4.CreateRotationY(_time * 0.9f) * Matrix4.CreateRotationX(_time * 0.6f);
+            var model = Matrix4.CreateScale(1.9f) * Matrix4.CreateRotationY(_time * 0.9f) * Matrix4.CreateRotationX(_time * 0.6f);
             var view = Matrix4.LookAt(new Vector3(1.6f, 1.2f, 3.0f), Vector3.Zero, Vector3.UnitY);
             var proj = Matrix4.CreatePerspectiveFieldOfView(
                 MathHelper.DegreesToRadians(60f),
@@ -227,6 +266,9 @@ namespace WindowEngine
 
             var mvp = model * view * proj;
             _shader.SetMatrix4("uMVP", mvp);
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, _texture);
 
             GL.BindVertexArray(_vao);
             GL.DrawElements(PrimitiveType.Triangles, s_CubeIndices.Length, DrawElementsType.UnsignedInt, 0);
@@ -247,6 +289,8 @@ namespace WindowEngine
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.DeleteBuffer(_ebo);
+
+            GL.DeleteTexture(_texture);
 
             _shader?.Dispose();
             GL.UseProgram(0);

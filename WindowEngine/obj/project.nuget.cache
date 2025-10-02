@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "JQBZ4oZDmnM=",
+  "dgSpecHash": "Td2x3lCO+HQ=",
   "success": true,
-  "projectFilePath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A3/WindowEngine/WindowEngine.csproj",
+  "projectFilePath": "/Users/pouyarad/Documents/SEM 6 CPA/GAM531/Assignments/A4/WindowEngine/WindowEngine.csproj",
   "expectedPackageFiles": [
+    "/Users/pouyarad/.nuget/packages/microsoft.win32.systemevents/9.0.9/microsoft.win32.systemevents.9.0.9.nupkg.sha512",
     "/Users/pouyarad/.nuget/packages/opentk/4.9.4/opentk.4.9.4.nupkg.sha512",
     "/Users/pouyarad/.nuget/packages/opentk.audio.openal/4.9.4/opentk.audio.openal.4.9.4.nupkg.sha512",
     "/Users/pouyarad/.nuget/packages/opentk.compute/4.9.4/opentk.compute.4.9.4.nupkg.sha512",
@@ -15,6 +16,8 @@
     "/Users/pouyarad/.nuget/packages/opentk.windowing.common/4.9.4/opentk.windowing.common.4.9.4.nupkg.sha512",
     "/Users/pouyarad/.nuget/packages/opentk.windowing.desktop/4.9.4/opentk.windowing.desktop.4.9.4.nupkg.sha512",
     "/Users/pouyarad/.nuget/packages/opentk.windowing.graphicslibraryframework/4.9.4/opentk.windowing.graphicslibraryframework.4.9.4.nupkg.sha512",
+    "/Users/pouyarad/.nuget/packages/stbimagesharp/2.30.15/stbimagesharp.2.30.15.nupkg.sha512",
+    "/Users/pouyarad/.nuget/packages/system.drawing.common/9.0.9/system.drawing.common.9.0.9.nupkg.sha512",
     "/Users/pouyarad/.nuget/packages/system.runtime.compilerservices.unsafe/6.0.0/system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
   ],
   "logs": []
